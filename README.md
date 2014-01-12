@@ -13,3 +13,8 @@ f: folder to save
 usage:
 
 	python vkdump_m.py -u mail@example.com -p password -i 12345 -f lolmusic
+
+
+## github-free.py
+
+free short github accs

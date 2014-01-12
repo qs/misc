@@ -29,12 +29,12 @@ def main(email, password, aim_id, folder):
         data = vk.get("http://m.vk.com/audios%s" % aim_id)
         cnt = int(re.findall(r'<em class\="tab_counter">([0-9,]+)<\/em>', data)[0].replace(',', ''))
     except:
-    	logging.error("Can't count audios")
+        logging.error("Can't count audios")
         exit()
     try:
-    	os.mkdir(folder)
+        os.mkdir(folder)
     except:
-    	pass
+        pass
     for i in range(0, cnt, 50):
         logging.info(u"Offset %s" % i)
         data = vk.get("http://m.vk.com/audios%s?offset=%s" % (aim_id, i)).split('<div class="ai_label">')[1:]
