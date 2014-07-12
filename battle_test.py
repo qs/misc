@@ -1,4 +1,36 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from random import randint, choice
+
+
+class AbstractBattleSkill:
+    def __init__(self, name, ap):
+        self.name = name
+        self.ap = ap
+
+    def use(self, author, aim=None):
+        raise Exception('must be overloaded in subclasses')
+
+    @classmethod
+    def get_battle_skills(cls):
+        return cls.__subclasses__
+
+
+class BattleSkillBeat(AbstractBattleSkill):
+    def use(self, author, aim):
+        aim.get_dmg(author)
+
+
+class BattleAction:
+    def __init__(self, author, skill, aim=None):
+        self.author = author
+        self.skill = skill
+        self.aim = aim
+        self.ap = skill.ap
+
+    def do(self):
+        skill.use(author, aim)
+
 
 class Character:
     def __init__(self, **kwargs):
@@ -10,10 +42,15 @@ class Character:
             kwargs['hp_max'] = kwargs['hp']
         if 'spd' not in kwargs:
             kwargs['spd'] = randint(1,5)
+        if 'ap' not in kwargs:
+            kwargs['ap'] = randint(8,10)
         self.name = self._gen_name()
-        for k, v in kwargs.items():
-             setattr(self, k, v)
         self.score = self.compute_score()
+        
+        self.battle_status = True  # alive
+        self.battle_auras = []
+        self.battle_skills = []
+        self.battle_actions = []
 
     def __repr__(self):
         return '<Char:%s hp:%s/%s dmg:%s spd:%s score:%s>' % \
@@ -27,12 +64,14 @@ class Character:
         return name.title()
 
     def compute_score(self):
-        return self.hp + self.dmg * 5 + self.spd
+        return self.hp + self.dmg * 5 + self.spd + self.ap * 8
 
     def choose_strategy(self):
+        # fill battle_actions
         pass
 
     def turn(self):
+        # do battle_actions
         pass
 
 
@@ -56,6 +95,12 @@ class Battle:
         self.turn = 0
 
     def compute_turn(self):
+        # testing random
+        for ch in self.characters:
+            ch.battle_actions = []
+            ch.battle_skills = list(set([choice(AbstractBattleSkill.get_battle_skills()) for i in range(4)]))
+
+        # turning
         for ch in self.characters:
             ch.choose_strategy()
 
@@ -64,7 +109,7 @@ class Battle:
 
 
 chars_lst = []
-for i in range(4):
+for i in range(10):
     chars_lst.append(Character())
 
 chars_lst = sorted(chars_lst, reverse=True, key=lambda x: x.score)
