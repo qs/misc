@@ -29,7 +29,7 @@ class BattleAction:
         self.ap = skill.ap
 
     def do(self):
-        skill.use(author, aim)
+        skill.use(self.author, self.aim)
 
 
 class Character:
@@ -72,7 +72,8 @@ class Character:
 
     def turn(self):
         # do battle_actions
-        pass
+        for action in self.battle_actions:
+            action.do()
 
 
 class Side:
@@ -92,6 +93,7 @@ class Battle:
     def __init__(self, sides):
         self.sides = sides  # lists of Sides
         self.characters = sorted([i for j in sides for i in j.characters], key=lambda x: x.spd)
+        self.characters_alive = self.characters
         self.turn = 0
 
     def compute_turn(self):
@@ -104,17 +106,24 @@ class Battle:
         for ch in self.characters:
             ch.choose_strategy()
 
-        for ch in self.characters:
+        for ch in self.characters_alive:
             ch.turn()
+            self.remove_dead()
+
+    def remove_dead(self):
+        for ch in self.characters_alive:
+            if ch.hp <= 0:
+                self.characters_alive.remove(ch)
 
 
+# characters generating
 chars_lst = []
 for i in range(10):
     chars_lst.append(Character())
 
-chars_lst = sorted(chars_lst, reverse=True, key=lambda x: x.score)
-
+# sides generating
 sides_num = 3
+chars_lst = sorted(chars_lst, reverse=True, key=lambda x: x.score)
 sides = [Side([]) for i in range(sides_num)]
 
 for ch in chars_lst:
@@ -123,4 +132,5 @@ for ch in chars_lst:
 
 print sides
 
+# battle begin
 battle = Battle(sides)
