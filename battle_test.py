@@ -95,6 +95,7 @@ class Battle:
         self.characters = sorted([i for j in sides for i in j.characters], key=lambda x: x.spd)
         self.characters_alive = self.characters
         self.turn = 0
+        self.status = 0  # 0 - in progress, 1 - finished
 
     def compute_turn(self):
         # testing random
@@ -103,18 +104,30 @@ class Battle:
             ch.battle_skills = list(set([choice(AbstractBattleSkill.get_battle_skills()) for i in range(4)]))
 
         # turning
-        for ch in self.characters:
-            ch.choose_strategy()
+        while self.status == 0:
+            for ch in self.characters:
+                ch.choose_strategy()
 
-        for ch in self.characters_alive:
-            ch.turn()
-            self.remove_dead()
+            for ch in self.characters_alive:
+                ch.turn()
+                self.remove_dead()
+                self.check_victory()
+            self.turn += 1
 
     def remove_dead(self):
         for ch in self.characters_alive:
             if ch.hp <= 0:
                 self.characters_alive.remove(ch)
 
+    def check_victory(self):
+        # TODO refactor
+        sides_alive = []
+        for side in self.sides:
+            if set(self.characters_alive) & set(side.characters):
+                sides_alive.append(side)
+        if len(set(sides_alive)) == 1:
+            print 'End of battle'
+            self.status = 1
 
 # characters generating
 chars_lst = []
