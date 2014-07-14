@@ -3,8 +3,8 @@
 from random import randint, choice
 
 
-class AbstractBattleSkill:
-    def __init__(self, name, ap):
+class AbstractBattleSkill(object):
+    def __init__(self, name=None, ap=10):
         self.name = name
         self.ap = ap
 
@@ -13,12 +13,16 @@ class AbstractBattleSkill:
 
     @classmethod
     def get_battle_skills(cls):
-        return cls.__subclasses__
+        return cls.__subclasses__()
 
 
 class BattleSkillBeat(AbstractBattleSkill):
+    def __init__(self, name='Beat', ap=3):
+        self.name = name
+        self.ap = ap
+
     def use(self, author, aim):
-        aim.get_dmg(author)
+        aim.battle_get_dmg(author, 'Beat')
 
 
 class BattleAction:
@@ -29,7 +33,7 @@ class BattleAction:
         self.ap = skill.ap
 
     def do(self):
-        skill.use(self.author, self.aim)
+        self.skill.use(self.author, self.aim)
 
 
 class Character:
@@ -44,6 +48,8 @@ class Character:
             kwargs['spd'] = randint(1,5)
         if 'ap' not in kwargs:
             kwargs['ap'] = randint(8,10)
+        for k,v in kwargs.items():
+            setattr(self, k, v)
         self.name = self._gen_name()
         self.score = self.compute_score()
         
@@ -66,14 +72,29 @@ class Character:
     def compute_score(self):
         return self.hp + self.dmg * 5 + self.spd + self.ap * 8
 
-    def choose_strategy(self):
+    def choose_strategy(self, allies, enemies):
         # fill battle_actions
-        pass
+        ap_curr = self.ap
+        while True:
+            skill = choice(self.battle_skills)()
+            enemy = choice(enemies)
+            action = BattleAction(author=self, aim=enemy, skill=skill)
+            if ap_curr - action.ap > 0:
+                self.battle_actions.append(action)
+                ap_curr -= action.ap
+            else:
+                break
 
     def turn(self):
         # do battle_actions
         for action in self.battle_actions:
             action.do()
+
+    def battle_get_dmg(self, author, action_name):
+        self.hp -= author.dmg
+        print "%(aim)s '%(action_name)s' by %(author)s with %(dmg)s dmg: %(aim)s [%(aim_hp)s/%(aim_hp_max)s]" % \
+                {'aim': self.name, 'author': author.name, 'dmg': author.dmg, 
+                    'aim_hp': self.hp, 'aim_hp_max': self.hp_max, 'action_name': action_name}
 
 
 class Side:
@@ -97,7 +118,21 @@ class Battle:
         self.turn = 0
         self.status = 0  # 0 - in progress, 1 - finished
 
-    def compute_turn(self):
+    def get_character_allies_and_side(self, character):
+        for side in self.sides:
+            if character in side.characters:
+                return side.characters, side
+
+    def get_character_enemies(self, ally_side):
+        enemies = []
+        for side in self.sides:
+            if side != ally_side:
+                for ch in side.characters:
+                    if ch in self.characters_alive:
+                        enemies.append(ch)
+        return enemies
+
+    def compute_battle(self):
         # testing random
         for ch in self.characters:
             ch.battle_actions = []
@@ -105,8 +140,11 @@ class Battle:
 
         # turning
         while self.status == 0:
+            print "=== Turn %s ===" % self.turn
             for ch in self.characters:
-                ch.choose_strategy()
+                allies, side = self.get_character_allies_and_side(ch)
+                enemies = self.get_character_enemies(side)
+                ch.choose_strategy(allies, enemies)
 
             for ch in self.characters_alive:
                 ch.turn()
@@ -118,6 +156,7 @@ class Battle:
         for ch in self.characters_alive:
             if ch.hp <= 0:
                 self.characters_alive.remove(ch)
+                print "%s died..." % ch.name
 
     def check_victory(self):
         # TODO refactor
@@ -134,6 +173,8 @@ chars_lst = []
 for i in range(10):
     chars_lst.append(Character())
 
+print chars_lst
+
 # sides generating
 sides_num = 3
 chars_lst = sorted(chars_lst, reverse=True, key=lambda x: x.score)
@@ -146,4 +187,6 @@ for ch in chars_lst:
 print sides
 
 # battle begin
+print '* * * BATTLE BEGINS * * *'
 battle = Battle(sides)
+battle.compute_battle()
