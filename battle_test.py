@@ -17,9 +17,15 @@ class AbstractBattleSkill(object):
 
 
 class BattleSkillBeat(AbstractBattleSkill):
-    def __init__(self, name='Beat', ap=3):
+    def __init__(self, name='Beat', ap=5):
         self.name = name
         self.ap = ap
+
+    def can_be_used(self, author, aim):
+        if aim.hp > 0:
+            return True
+        else:
+            return False
 
     def use(self, author, aim):
         aim.battle_get_dmg(author, 'Beat')
@@ -33,7 +39,8 @@ class BattleAction:
         self.ap = skill.ap
 
     def do(self):
-        self.skill.use(self.author, self.aim)
+        if self.skill.can_be_used(self.author, self.aim):
+            self.skill.use(self.author, self.aim)
 
 
 class Character:
@@ -149,7 +156,8 @@ class Battle:
             for ch in self.characters_alive:
                 ch.turn()
                 self.remove_dead()
-                self.check_victory()
+                if self.check_victory():
+                    break
             self.turn += 1
 
     def remove_dead(self):
@@ -165,12 +173,19 @@ class Battle:
             if set(self.characters_alive) & set(side.characters):
                 sides_alive.append(side)
         if len(set(sides_alive)) == 1:
-            print 'End of battle'
+            print 'End of battle\n. . . . . . . . . .'
             self.status = 1
+            for side in self.sides:
+                print 'side:'
+                for ch in side.characters:
+                    print ch
+            return True
+        else:
+            return False
 
 # characters generating
 chars_lst = []
-for i in range(10):
+for i in range(20):
     chars_lst.append(Character())
 
 print chars_lst
