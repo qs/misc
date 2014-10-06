@@ -77,7 +77,7 @@ class Character:
         return name.title()
 
     def compute_score(self):
-        return self.hp + self.dmg * 5 + self.spd + self.ap * 8
+        return self.hp + self.dmg * 5 + self.spd * 20 + self.ap * 8
 
     def choose_strategy(self, allies, enemies):
         # fill battle_actions
@@ -176,7 +176,7 @@ class Battle:
             print 'End of battle\n. . . . . . . . . .'
             self.status = 1
             for side in self.sides:
-                print 'side:'
+                print 'side (score: %s)' % sum([ch.score for ch in side.characters])
                 for ch in side.characters:
                     print ch
             return True
